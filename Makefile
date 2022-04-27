@@ -12,8 +12,10 @@ CUDNN_INC_PATH ?= $(CUDNN_PATH)/include
 CUDNN_LIB_PATH ?= $(CUDNN_PATH)/lib64
 
 # CUDA code generation flags
-GENCODE_FLAGS := -gencode arch=compute_70,code=sm_70 \
-        -gencode arch=compute_80,code=sm_80
+# GENCODE_FLAGS := -gencode arch=compute_70,code=sm_70 \
+#         -gencode arch=compute_80,code=sm_80
+
+GENCODE_FLAGS = -gencode arch=compute_80,code=sm_80
 
 # Common binaries
 NVCC ?= $(CUDA_BIN_PATH)/nvcc

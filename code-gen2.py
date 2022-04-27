@@ -7,31 +7,37 @@ import json
 
 
 def extract_blocks(json_file):
-    inputs = [[128, 128, 28, 28]]    
+    inputs = []
     all_blocks = []
     with open(json_file) as j_f:
         mask = json.load(j_f)
-        # for k0, v0 in mask.items():
-        v0 = mask['block3.layer.2.conv1.weight']
-        filter_size = v0['size']
-        layer_blocks = v0['block']
+        for k0, v0 in mask.items():
+        # v0 = mask['block3.layer.2.conv1.weight']
+        # v0 = mask['block2.layer.1.conv2.weight']
+            if v0['density'] < 0.3:
+                
+                # NCHW
+                input_size = v0['input_size']
+                filter_size = v0['filter_size']
+                layer_blocks = v0['block']
 
-        filters_ptr = [0]
-        filters = []
-        channels_ptr = [0]
-        channels = []
-        for b in layer_blocks:
-            filters_ptr.append(filters_ptr[-1]+len(b[0]))
-            filters.extend(b[0])
-            channels_ptr.append(channels_ptr[-1]+len(b[1]))
-            channels.extend(b[1])
+                filters_ptr = [0]
+                filters = []
+                channels_ptr = [0]
+                channels = []
+                for b in layer_blocks:
+                    filters_ptr.append(filters_ptr[-1]+len(b[0]))
+                    filters.extend(b[0])
+                    channels_ptr.append(channels_ptr[-1]+len(b[1]))
+                    channels.extend(b[1])
 
-        filters_ptr = [str(i) for i in filters_ptr]
-        filters = [str(i) for i in filters]
-        channels_ptr = [str(i) for i in channels_ptr]
-        channels = [str(i) for i in channels]
+                filters_ptr = [str(i) for i in filters_ptr]
+                filters = [str(i) for i in filters]
+                channels_ptr = [str(i) for i in channels_ptr]
+                channels = [str(i) for i in channels]
 
-        all_blocks.append([filters_ptr, filters, channels_ptr, channels])
+                all_blocks.append([filters_ptr, filters, channels_ptr, channels])
+                inputs.append([filter_size[1], filter_size[0], input_size[2], input_size[3]])
 
     return inputs, all_blocks
 
@@ -67,19 +73,18 @@ def build_switch(H, W):
 
 if __name__ == '__main__':
 
-    inputs, all_blocks = extract_blocks('./mask.json')
+    inputs, all_blocks = extract_blocks('./mask_new.json')
 
     max_shared_mem_size = 40000
-    TBS = [1,2,4,8,16,32]
-    THS = [1,2,3,4,5,6,7]
-    ths = [2,3,4,5,6,7]
-    tws = [2,3,4,5,6,7]
-    tcs = [1,2,4,8]
-    exc_file = './group-conv'
+    TBS = [1, 2, 4, 8, 16, 32]
+    THS = [1, 2, 3, 4, 5, 6, 7]
+    # ths = [2,3,4,5,6,7]
+    # tws = [2,3,4,5,6,7]
+    ths = [2]
+    tws = [2]
+    tcs = [1, 2, 4, 8]
 
-    # inputs = [(64,32,224,224),(64,32,112,112),(32,32,56,56),(64,32,56,56),(64,64,56,56),(32,32,28,28),(64,32,28,28)
-    #     ,(96,64,28,28),(160,96,28,28),(192,96,28,28),(32,32,14,14),(64,32,14,14),(128,96,14,14),(192,96,14,14),(32,32,7,7),
-    #           (64,32,7,7),(96,64,7,7),(192,160,7,7)]
+    exc_file = './group-conv'
 
     reader = codecs.open('group-conv-template.cu', 'r', 'utf-8')
     temp_lines = reader.readlines()
